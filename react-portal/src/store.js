@@ -6,6 +6,8 @@ const initialState = {
   data: [],
   patient: {},
   family: {},
+  selectedPatient: {},
+  selectedPatientNote: {},
   filters: [
     {
       field: 1,
@@ -26,6 +28,10 @@ const StateProvider = ({ children }) => {
         return { ...state, ...{ page: action.value } };
       case 'set-patient':
         return { ...state, ...{ patient: action.value } };
+      case 'set-selected-patient':
+        return { ...state, ...{ selectedPatient: action.value } };
+      case 'set-selected-patient-note':
+        return { ...state, ...{ selectedPatientNote: action.value } };
       case 'set-family':
         return { ...state, ...{ family: action.value } };
       case 'set-filters':
