@@ -174,8 +174,6 @@ export default function RegisterPatient(props) {
             color="primary"
             onClick={async () => {
               const patient = state.patient;
-              console.log(patient);
-              console.log(patient?.ssn);
               const _missing = checkMissing(state.patient);
               setErrors(_missing);
               if (_missing.length > 0) {

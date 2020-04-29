@@ -24,6 +24,8 @@ const { Provider } = store;
 const StateProvider = ({ children }) => {
   const [state, dispatch] = useReducer((state, action) => {
     switch (action.type) {
+      case 'set-data':
+        return { ...state, ...{ data: action.value } };
       case 'set-page':
         return { ...state, ...{ page: action.value } };
       case 'set-patient':

@@ -7,22 +7,21 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogContentText,
   TextField,
   DialogActions,
   Button,
-  MenuItem,
   List,
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
   IconButton,
-  FormControlLabel,
-  Switch,
   Chip,
 } from '@material-ui/core';
-import { Visibility, Add, Done } from '@material-ui/icons';
+import { Visibility, Add } from '@material-ui/icons';
+import axios from 'axios';
+import moment from 'moment';
 //COMPONENTS
+import SnackBarNotification from '../../components/SnackBarNotification';
 import DialogNewPatientNote from '../../components/DialogNewPatientNote';
 import DialogUpdatePatientNote from '../../components/DialogUpdatePatientNote';
 import DialogNewFamilly from '../../components/DialogNewFamilly';
@@ -31,8 +30,8 @@ import DialogUpdateFamilly from '../../components/DialogUpdateFamilly';
 //STORE
 import { store } from '../../store.js';
 //UTILS
-import Sex from '../../utils/Sex';
-import PatientStatus from '../../utils/PatientStatus';
+import PatientFields from '../../utils/PatientFields';
+import PatientRequiredFields from '../../utils/PatientRequiredFields';
 //DATE
 import MomentUtils from '@date-io/moment';
 import {
@@ -106,84 +105,6 @@ const patientNotes = [
   },
 ];
 
-const required = ['firstName', 'lastName', 'ssn', 'sex', 'age'];
-const fields = [
-  {
-    label: 'First Name',
-    required: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 4,
-    value: 'firstName',
-  },
-  {
-    label: 'Last Name',
-    required: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 4,
-    value: 'lastName',
-  },
-  {
-    label: 'SSN',
-    required: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 2,
-    value: 'ssn',
-  },
-  {
-    label: 'Bed',
-    //required: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 2,
-    value: 'bed',
-  },
-  {
-    label: 'Age',
-    required: true,
-    type: 'number',
-    xs: 6,
-    sm: 6,
-    md: 2,
-    value: 'age',
-  },
-  {
-    label: 'Sex',
-    required: true,
-    select: true,
-    type: 'text',
-    xs: 6,
-    sm: 6,
-    md: 2,
-    value: 'sex',
-    child: Sex.map((e) => (
-      <MenuItem key={e.value} value={e.value}>
-        {e.label}
-      </MenuItem>
-    )),
-  },
-  {
-    label: 'Status',
-    select: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 2,
-    value: 'status',
-    child: PatientStatus.map((e) => (
-      <MenuItem key={e.value} value={e.value}>
-        {e.value}
-      </MenuItem>
-    )),
-  },
-];
-
 export default function DialogPatient(props) {
   const classes = useStyles();
   const globalState = useContext(store);
@@ -193,10 +114,23 @@ export default function DialogPatient(props) {
   const [noteUpdate, setNoteUpdate] = React.useState(false);
   const [familly, setFamilly] = React.useState(false);
   const [updateFamilly, setUpdateFamilly] = React.useState(false);
+  const [snackBar, setSnackBar] = React.useState(false);
+  const [snackBarMessage, setSnackBarMessage] = React.useState('');
+
+  useEffect(() => {
+    console.log('LOADED THIS');
+    if (props.open) {
+      console.log('OPEN');
+    }
+    return () => {
+      // Clean up the subscription
+      //subscription.unsubscribe();
+    };
+  }, [props.open]);
 
   function checkMissing(obj) {
     let _temp = [];
-    for (let i of required) {
+    for (let i of PatientRequiredFields) {
       if (!obj.hasOwnProperty(i)) {
         _temp.push(i);
       } else {
@@ -209,6 +143,12 @@ export default function DialogPatient(props) {
   }
   return (
     <>
+      <SnackBarNotification
+        open={snackBar}
+        handleClose={() => setSnackBar(false)}
+        message={snackBarMessage}
+        duration={5000}
+      />
       <DialogNewFamilly open={familly} handleClose={() => setFamilly(false)} />
       <DialogUpdateFamilly
         open={updateFamilly}
@@ -238,7 +178,7 @@ export default function DialogPatient(props) {
                 //justify="center"
                 //alignItems="center"
               >
-                {fields.map((e, i) => (
+                {PatientFields.map((e, i) => (
                   <Grid
                     item
                     xs={e.xs}
@@ -403,9 +343,91 @@ export default function DialogPatient(props) {
           <Button
             variant="outlined"
             color="primary"
-            onClick={() => {
-              const _missing = checkMissing(state.patient);
+            onClick={async () => {
+              const selectedPatient = state.selectedPatient;
+              console.log(selectedPatient);
+              const _missing = checkMissing(selectedPatient);
               setErrors(_missing);
+              if (_missing.length > 0) {
+                setSnackBar(true);
+                setSnackBarMessage('Error: Missing parameters');
+              } else {
+                const params = {
+                  sql:
+                    'UPDATE patient SET firstName=:firstName,lastName=:lastName,ssn=:ssn,bed=:bed,age=:age,sex=:sex,status=:status,updatedDate=:updatedDate,admissionDate=:admissionDate,exitDate=:exitDate WHERE patientId = :patientId',
+                  parameters: [
+                    {
+                      name: 'patientId',
+                      value: { longValue: selectedPatient?.patientId },
+                    },
+                    {
+                      name: 'firstName',
+                      value: { stringValue: selectedPatient?.firstName },
+                    },
+                    {
+                      name: 'lastName',
+                      value: { stringValue: selectedPatient?.lastName },
+                    },
+                    {
+                      name: 'ssn',
+                      value: { stringValue: selectedPatient?.ssn },
+                    },
+                    {
+                      name: 'bed',
+                      value: {
+                        stringValue: selectedPatient?.bed
+                          ? selectedPatient?.bed
+                          : '',
+                      },
+                    },
+                    { name: 'age', value: { longValue: selectedPatient?.age } },
+                    { name: 'sex', value: { longValue: selectedPatient?.sex } },
+                    {
+                      name: 'status',
+                      value: {
+                        longValue: selectedPatient?.status,
+                      },
+                    },
+                    {
+                      name: 'updatedDate',
+                      value: { stringValue: moment.utc().format('YYYY-MM-DD') },
+                    },
+                    {
+                      name: 'admissionDate',
+                      value: { stringValue: selectedPatient?.admissionDate },
+                    },
+                    {
+                      name: 'exitDate',
+                      value: { stringValue: selectedPatient?.exitDate },
+                    },
+                  ],
+                };
+                await axios({
+                  method: 'post',
+                  url:
+                    'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+                  data: params,
+                })
+                  .then((res) => {
+                    console.log(res.data);
+                    setSnackBar(true);
+                    setSnackBarMessage('Successfully updated the DB');
+                    dispatch({
+                      type: 'set-data',
+                      value: state.data.map((e) => {
+                        if (e.patientId === selectedPatient.patientId) {
+                          return selectedPatient;
+                        } else {
+                          return e;
+                        }
+                      }),
+                    });
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                  });
+                props.handleClose();
+              }
             }}
           >
             Update

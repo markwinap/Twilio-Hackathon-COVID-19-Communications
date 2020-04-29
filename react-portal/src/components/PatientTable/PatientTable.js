@@ -11,37 +11,18 @@ import {
   TableBody,
   TablePagination,
 } from '@material-ui/core';
+import axios from 'axios';
+import moment from 'moment';
 //COMPONENTS
 import TableHeadPatient from '../../components/TableHeadPatient';
 import DialogPatient from '../../components/DialogPatient';
+import SnackBarNotification from '../../components/SnackBarNotification';
 //UTILS
 import Sex from '../../utils/Sex';
 import PatientStatus from '../../utils/PatientStatus';
 //STORE
 import { store } from '../../store.js';
 
-const rows = [
-  {
-    patientId: 1,
-    firstName: 'Juan',
-    lastName: 'Perez',
-    ssn: '123456789',
-    bed: 'ABC12',
-    age: 32,
-    sex: 1,
-    status: 20,
-  },
-  {
-    patientId: 2,
-    firstName: 'Ana',
-    lastName: 'Gonzales',
-    ssn: '456789',
-    bed: 'ABC13',
-    age: 32,
-    sex: 2,
-    status: 30,
-  },
-];
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
     return -1;
@@ -107,7 +88,7 @@ export default function PatientTable() {
   const [value, setValue] = React.useState(0);
   const classes = useStyles();
   const globalState = useContext(store);
-  const { dispatch } = globalState;
+  const { dispatch, state } = globalState;
   const [dialog, setDialog] = React.useState(false);
   const [order, setOrder] = React.useState('asc');
   const [orderBy, setOrderBy] = React.useState('patientId');
@@ -115,40 +96,59 @@ export default function PatientTable() {
   const [page, setPage] = React.useState(0);
   const [dense, setDense] = React.useState(true);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [results, setResults] = useState([]);
+  const [snackBar, setSnackBar] = React.useState(false);
+  const [snackBarMessage, setSnackBarMessage] = React.useState('');
+
+  useEffect(() => {
+    const params = {
+      sql: 'SELECT * FROM patient LIMIT 10',
+      parameters: [],
+    };
+    async function loadData(params) {
+      await axios({
+        method: 'post',
+        url:
+          'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+        data: params,
+      })
+        .then((res) => {
+          let records = res.data.records;
+          records = records.map((e) => ({
+            patientId: e[0].longValue,
+            firstName: e[1].stringValue,
+            lastName: e[2].stringValue,
+            name: `${e[1].stringValue} ${e[2].stringValue}`,
+            ssn: e[3].stringValue,
+            bed: e[4].stringValue,
+            age: e[5].longValue,
+            sex: e[6].longValue,
+            status: e[7].longValue,
+            createdDate: e[8].stringValue,
+            updatedDate: e[9].stringValue,
+            admissionDate: e[10].stringValue,
+            exitDate: e[11].stringValue,
+          }));
+          setResults(records);
+          setSnackBar(true);
+          setSnackBarMessage('Data loaded from DB');
+          dispatch({
+            type: 'set-data',
+            value: records,
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+    loadData(params);
+    return () => {};
+  }, [dispatch, value]);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
     setOrderBy(property);
-  };
-
-  const handleSelectAllClick = (event) => {
-    if (event.target.checked) {
-      const newSelecteds = rows.map((n) => n.name);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
-  };
-
-  const handleClick = (event, name) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
-    }
-
-    setSelected(newSelected);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -160,42 +160,36 @@ export default function PatientTable() {
     setPage(0);
   };
 
-  const handleChangeDense = (event) => {
-    setDense(event.target.checked);
-  };
-
-  const isSelected = (name) => selected.indexOf(name) !== -1;
-
   const emptyRows =
-    rowsPerPage - Math.min(rowsPerPage, rows.length - page * rowsPerPage);
-
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
+    rowsPerPage - Math.min(rowsPerPage, state.data.length - page * rowsPerPage);
 
   return (
     <div className={classes.root}>
+      <SnackBarNotification
+        open={snackBar}
+        handleClose={() => setSnackBar(false)}
+        message={snackBarMessage}
+        duration={5000}
+      />
       <DialogPatient open={dialog} handleClose={() => setDialog(false)} />
       <TableContainer component={Paper}>
-        <Table className={classes.table} aria-label="simple table">
+        <Table className={classes.table} aria-label="simple table" size="small">
           <TableHeadPatient
             classes={classes}
             numSelected={selected.length}
             order={order}
             orderBy={orderBy}
-            onSelectAllClick={handleSelectAllClick}
             onRequestSort={handleRequestSort}
-            rowCount={rows.length}
+            rowCount={state.data.length}
           />
           <TableBody>
-            {stableSort(rows, getComparator(order, orderBy))
+            {stableSort(state.data, getComparator(order, orderBy))
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row, index) => {
                 return (
                   <TableRow
                     hover
                     onClick={(e) => {
-                      console.log(e, row);
                       setDialog(true);
                       dispatch({
                         type: 'set-selected-patient',
@@ -212,7 +206,7 @@ export default function PatientTable() {
                     <TableCell>{row.bed}</TableCell>
                     <TableCell>{row.age}</TableCell>
                     <TableCell>
-                      {Sex.filter((e) => e.value === row.sex)[0].label}
+                      {Sex.filter((e) => e.value === row.sex)[0]?.label}
                     </TableCell>
                     <TableCell>
                       <Tooltip
@@ -238,7 +232,7 @@ export default function PatientTable() {
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={rows.length}
+        count={state.data.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onChangePage={handleChangePage}
