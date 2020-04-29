@@ -1,10 +1,10 @@
 const sex = [
   {
-    value: 1,
+    value: 0,
     label: 'M',
   },
   {
-    value: 2,
+    value: 1,
     label: 'F',
   },
 ];

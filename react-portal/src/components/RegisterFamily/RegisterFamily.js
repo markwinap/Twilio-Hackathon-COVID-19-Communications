@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import {
@@ -10,10 +10,17 @@ import {
   CircularProgress,
 } from '@material-ui/core';
 import Autocomplete from '@material-ui/lab/Autocomplete';
-
+import axios from 'axios';
+import moment from 'moment';
+//UTILS
+import FamillyFields from '../../utils/FamillyFields';
+import FamillyRequiredFields from '../../utils/FamillyRequiredFields';
 //STORE
 import { store } from '../../store.js';
-
+//COMPONENT
+import SnackBarNotification from '../../components/SnackBarNotification';
+//HOOKS
+import Debounce from '../../hooks/Debounce';
 const useStyles = makeStyles((theme) => ({
   root: {
     flexGrow: 1,
@@ -23,150 +30,33 @@ const useStyles = makeStyles((theme) => ({
     paddingRight: 40,
   },
 }));
-const required = ['firstName', 'lastName', 'relationship', 'patient'];
-const relationship = [
-  {
-    value: 1,
-    label: 'Friend',
-  },
-  {
-    value: 2,
-    label: 'Spouse',
-  },
-  {
-    value: 3,
-    label: 'Parent',
-  },
-  {
-    value: 4,
-    label: 'Child',
-  },
-  {
-    value: 5,
-    label: 'Sibling',
-  },
-  {
-    value: 99,
-    label: 'Other',
-  },
-];
-const fields = [
-  {
-    label: 'First Name',
-    required: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 4,
-    value: 'firstName',
-  },
-  {
-    label: 'Last Name',
-    required: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 4,
-    value: 'lastName',
-  },
-  {
-    label: 'Relationship',
-    required: true,
-    select: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 4,
-    value: 'relationship',
-    child: relationship.map((e) => (
-      <MenuItem key={e.value} value={e.value}>
-        {e.label}
-      </MenuItem>
-    )),
-  },
-  {
-    label: 'Email',
-    //required: true,
-    type: 'email',
-    xs: 6,
-    sm: 6,
-    md: 3,
-    value: 'email',
-  },
-  {
-    label: 'Mobile',
-    //required: true,
-    type: 'phone',
-    xs: 6,
-    sm: 6,
-    md: 3,
-    value: 'mobile',
-  },
-];
+
 RegisterFamily.propTypes = {
   title: PropTypes.string,
 };
 RegisterFamily.defaultProps = {
   title: 'Title',
 };
-
+let timeout = null;
 export default function RegisterFamily(props) {
   const [Errors, setErrors] = React.useState([]);
+  const [snackBar, setSnackBar] = React.useState(false);
+  const [snackBarMessage, setSnackBarMessage] = React.useState('');
   const [open, setOpen] = React.useState(false);
   const [options, setOptions] = React.useState([]);
-  const loading = open && options.length === 0;
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const debouncedSearchTerm = Debounce(searchTerm, 500);
+
   const classes = useStyles();
   const globalState = useContext(store);
   const { dispatch, state } = globalState;
 
-  useEffect(() => {
-    let active = true;
-
-    if (!loading) {
-      return undefined;
-    }
-    /*
-  "SZ": {
-    "index-entry-number": "208",
-    "entry-number": "208",
-    "entry-timestamp": "2018-06-13T13:54:40Z",
-    "key": "SZ",
-    "item": [
-      {
-        "country": "SZ",
-        "official-name": "Kingdom of Eswatini",
-        "name": "Eswatini",
-        "citizen-names": "Swazi"
-      }
-    ]
-  },
-*/
-    (async () => {
-      //const response = await fetch('https://country.register.gov.uk/records.json?page-size=5000');
-      const response =
-        '{"MM":{"index-entry-number":"210","entry-number":"210","entry-timestamp":"2019-06-14T14:27:30Z","key":"MM","item":[{"country":"MM","official-name":"The Republic of the Union of Myanmar","name":"Myanmar (Burma)","citizen-names":"Citizen of Myanmar"}]}}';
-      //await sleep(1e3); // For demo purposes.
-      const countries = JSON.parse(response);
-
-      if (active) {
-        setOptions(Object.keys(countries).map((key) => countries[key].item[0]));
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [loading]);
-
-  useEffect(() => {
-    if (!open) {
-      setOptions([]);
-    }
-  }, [open]);
-
   function checkMissing(obj) {
     let _temp = [];
-    for (let i of required) {
+    for (let i of FamillyRequiredFields) {
       if (!obj.hasOwnProperty(i)) {
         _temp.push(i);
       } else {
@@ -177,8 +67,63 @@ export default function RegisterFamily(props) {
     }
     return _temp;
   }
+
+  useEffect(() => {
+    async function getData(value) {
+      const params = {
+        sql:
+          'SELECT * FROM patient WHERE CONCAT(firstName," ",lastName) LIKE :like LIMIT 10',
+        parameters: [
+          {
+            name: 'like',
+            value: { stringValue: `%${value}%` },
+          },
+        ],
+      };
+      await axios({
+        method: 'post',
+        url:
+          'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+        data: params,
+      })
+        .then((res) => {
+          const records = res.data.records;
+          setResults(
+            records.map((e) => ({
+              patientId: e[0].longValue,
+              firstName: e[1].stringValue,
+              lastName: e[2].stringValue,
+              name: `${e[1].stringValue} ${e[2].stringValue}`,
+            }))
+          );
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      setLoading(false);
+    }
+    if (debouncedSearchTerm) {
+      setIsSearching(true);
+      getData(debouncedSearchTerm);
+      setLoading(true);
+    } else {
+      setResults([]);
+    }
+  }, [debouncedSearchTerm, dispatch]);
+
+  useEffect(() => {
+    if (!open) {
+      setOptions([]);
+    }
+  }, [open]);
   return (
     <div className={classes.root}>
+      <SnackBarNotification
+        open={snackBar}
+        handleClose={() => setSnackBar(false)}
+        message={snackBarMessage}
+        duration={5000}
+      />
       <Grid item xs={12}>
         <Typography
           variant="h3"
@@ -197,13 +142,13 @@ export default function RegisterFamily(props) {
         //justify="center"
         //alignItems="center"
       >
-        {fields.map((e, i) => (
+        {FamillyFields.map((e, i) => (
           <Grid
             item
             xs={e.xs}
             sm={e.sm}
             md={e.md}
-            key={`grid_register_patitent_${i}`}
+            key={`grid_register_familly_${i}`}
           >
             <TextField
               required={e?.required}
@@ -211,16 +156,16 @@ export default function RegisterFamily(props) {
               fullWidth
               select={e?.select}
               type={e?.type}
-              id={`register_patient_${e?.label}`}
+              id={`register_familly_${e?.label}`}
               label={e?.label}
-              value={state.patient[e?.value]}
+              value={state.family[e?.value] ? state.family[e?.value] : ''}
               onChange={(f) => {
-                const patient = state.patient;
+                const family = state.family;
                 dispatch({
-                  type: 'set-patient',
+                  type: 'set-family',
                   value: {
-                    ...{ patient },
-                    ...{ [e.value]: f.currentTarget.value },
+                    ...family,
+                    ...{ [e.value]: f.target.value },
                   },
                 });
               }}
@@ -239,18 +184,52 @@ export default function RegisterFamily(props) {
             onClose={() => {
               setOpen(false);
             }}
-            getOptionSelected={(option, value) => option.name === value.name}
+            onChange={(event, value, reason) => {
+              const family = state.family;
+              if (reason === 'clear') {
+                dispatch({
+                  type: 'set-family',
+                  value: {
+                    ...family,
+                    ...{ patientId: 0, patientName: '' },
+                  },
+                });
+              } else {
+                dispatch({
+                  type: 'set-family',
+                  value: {
+                    ...family,
+                    ...{ patientId: value.patientId, patientName: value.name },
+                  },
+                });
+              }
+            }}
+            // getOptionSelected={(option, value) => option.name === value.name}
             getOptionLabel={(option) => option.name}
-            options={options}
+            options={results}
             loading={loading}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="Patient"
+                required
+                error={Errors.includes('patientName')}
                 fullWidth
                 //variant="outlined"
+                value={
+                  state?.family?.patientName ? state?.family?.patientName : ''
+                }
                 onChange={(e) => {
-                  console.log(e.currentTarget.value);
+                  const family = state.family;
+                  dispatch({
+                    type: 'set-family',
+                    value: {
+                      ...family,
+                      ...{ patientName: e.target.value },
+                    },
+                  });
+
+                  setSearchTerm(e.target.value);
                 }}
                 InputProps={{
                   ...params.InputProps,
@@ -271,9 +250,66 @@ export default function RegisterFamily(props) {
           <Button
             variant="contained"
             color="primary"
-            onClick={() => {
-              const _missing = checkMissing(state.patient);
+            onClick={async () => {
+              const family = state.family;
+              console.log(family);
+              const _missing = checkMissing(state.family);
               setErrors(_missing);
+              if (_missing.length > 0) {
+                setSnackBar(true);
+                setSnackBarMessage('Error: Missing parameters');
+              } else {
+                const params = {
+                  sql:
+                    'INSERT INTO familly (firstName,lastName,relationship,email,mobile,createdDate,updatedDate,patientId) values (:firstName,:lastName,:relationship,:email,mobile,:createdDate,:updatedDate,:patientId)',
+                  parameters: [
+                    {
+                      name: 'firstName',
+                      value: { stringValue: family?.firstName },
+                    },
+                    {
+                      name: 'lastName',
+                      value: { stringValue: family?.lastName },
+                    },
+                    {
+                      name: 'relationship',
+                      value: { longValue: family?.relationship },
+                    },
+                    { name: 'email', value: { stringValue: family?.email } },
+                    { name: 'mobile', value: { stringValue: family?.mobile } },
+                    {
+                      name: 'patientId',
+                      value: { longValue: family?.patientId },
+                    },
+                    {
+                      name: 'createdDate',
+                      value: { stringValue: moment.utc().format('YYYY-MM-DD') },
+                    },
+                    {
+                      name: 'updatedDate',
+                      value: { stringValue: moment.utc().format('YYYY-MM-DD') },
+                    },
+                  ],
+                };
+                await axios({
+                  method: 'post',
+                  url:
+                    'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+                  data: params,
+                })
+                  .then((res) => {
+                    console.log(res.data);
+                    setSnackBar(true);
+                    setSnackBarMessage('Successfully inserted data into DB');
+                    dispatch({
+                      type: 'set-family',
+                      value: {},
+                    });
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                  });
+              }
             }}
           >
             Submit

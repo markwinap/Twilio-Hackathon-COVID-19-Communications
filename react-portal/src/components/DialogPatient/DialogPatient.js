@@ -238,18 +238,6 @@ export default function DialogPatient(props) {
                 //justify="center"
                 //alignItems="center"
               >
-                <Grid item xs={12} sm={12} md={12}>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    onClick={() => {
-                      const _missing = checkMissing(state.patient);
-                      setErrors(_missing);
-                    }}
-                  >
-                    Update
-                  </Button>
-                </Grid>
                 {fields.map((e, i) => (
                   <Grid
                     item
@@ -348,6 +336,7 @@ export default function DialogPatient(props) {
                     <Chip
                       key={`${e.firstName}${e.lastName}`}
                       label={`${e.firstName} ${e.lastName}`}
+                      variant="outlined"
                       onDelete={() => {
                         console.log('Delete family ');
                       }}
@@ -411,6 +400,16 @@ export default function DialogPatient(props) {
           </Grid>
         </DialogContent>
         <DialogActions>
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={() => {
+              const _missing = checkMissing(state.patient);
+              setErrors(_missing);
+            }}
+          >
+            Update
+          </Button>
           <Button
             onClick={props.handleClose}
             color="secondary"

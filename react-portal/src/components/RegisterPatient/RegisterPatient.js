@@ -1,23 +1,21 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
-import {
-  Grid,
-  Typography,
-  TextField,
-  MenuItem,
-  Button,
-} from '@material-ui/core';
+import { Grid, Typography, TextField, Button } from '@material-ui/core';
+import axios from 'axios';
+import moment from 'moment';
 import MomentUtils from '@date-io/moment';
 import {
   MuiPickersUtilsProvider,
   KeyboardDatePicker,
 } from '@material-ui/pickers';
 //UTILS
-import Sex from '../../utils/Sex';
-import PatientStatus from '../../utils/PatientStatus';
+import PatientFields from '../../utils/PatientFields';
+import PatientRequiredFields from '../../utils/PatientRequiredFields';
 //STORE
 import { store } from '../../store.js';
+//COMPONENT
+import SnackBarNotification from '../../components/SnackBarNotification';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -28,83 +26,7 @@ const useStyles = makeStyles((theme) => ({
     paddingRight: 40,
   },
 }));
-const required = ['firstName', 'lastName', 'ssn', 'sex', 'age'];
-const fields = [
-  {
-    label: 'First Name',
-    required: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 4,
-    value: 'firstName',
-  },
-  {
-    label: 'Last Name',
-    required: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 4,
-    value: 'lastName',
-  },
-  {
-    label: 'SSN',
-    required: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 2,
-    value: 'ssn',
-  },
-  {
-    label: 'Bed',
-    //required: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 2,
-    value: 'bed',
-  },
-  {
-    label: 'Age',
-    required: true,
-    type: 'number',
-    xs: 6,
-    sm: 6,
-    md: 1,
-    value: 'age',
-  },
-  {
-    label: 'Sex',
-    required: true,
-    select: true,
-    type: 'text',
-    xs: 6,
-    sm: 6,
-    md: 1,
-    value: 'sex',
-    child: Sex.map((e) => (
-      <MenuItem key={e.value} value={e.value}>
-        {e.label}
-      </MenuItem>
-    )),
-  },
-  {
-    label: 'Status',
-    select: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 4,
-    value: 'status',
-    child: PatientStatus.map((e) => (
-      <MenuItem key={e.value} value={e.value}>
-        {e.label}
-      </MenuItem>
-    )),
-  },
-];
+
 RegisterPatient.propTypes = {
   title: PropTypes.string,
 };
@@ -114,12 +36,15 @@ RegisterPatient.defaultProps = {
 
 export default function RegisterPatient(props) {
   const [Errors, setErrors] = React.useState([]);
+  const [snackBar, setSnackBar] = React.useState(false);
+  const [snackBarMessage, setSnackBarMessage] = React.useState('');
+
   const classes = useStyles();
   const globalState = useContext(store);
   const { dispatch, state } = globalState;
   function checkMissing(obj) {
     let _temp = [];
-    for (let i of required) {
+    for (let i of PatientRequiredFields) {
       if (!obj.hasOwnProperty(i)) {
         _temp.push(i);
       } else {
@@ -132,6 +57,12 @@ export default function RegisterPatient(props) {
   }
   return (
     <div className={classes.root}>
+      <SnackBarNotification
+        open={snackBar}
+        handleClose={() => setSnackBar(false)}
+        message={snackBarMessage}
+        duration={3000}
+      />
       <Grid item xs={12}>
         <Typography
           variant="h3"
@@ -150,7 +81,7 @@ export default function RegisterPatient(props) {
         //justify="center"
         //alignItems="center"
       >
-        {fields.map((e, i) => (
+        {PatientFields.map((e, i) => (
           <Grid
             item
             xs={e.xs}
@@ -166,14 +97,14 @@ export default function RegisterPatient(props) {
               type={e?.type}
               id={`register_patient_${e?.label}`}
               label={e?.label}
-              value={state.patient[e?.value]}
+              value={state.patient[e?.value] ? state.patient[e?.value] : ''}
               onChange={(f) => {
                 const patient = state.patient;
                 dispatch({
                   type: 'set-patient',
                   value: {
-                    ...{ patient },
-                    ...{ [e.value]: f.currentTarget.value },
+                    ...patient,
+                    ...{ [e.value]: f.target.value },
                   },
                 });
               }}
@@ -189,14 +120,18 @@ export default function RegisterPatient(props) {
               id="date-admission"
               label="Admission Date"
               format="MM/DD/YYYY"
-              value={state?.patient?.admission}
+              value={
+                state?.patient?.admissionDate
+                  ? state?.patient?.admissionDate
+                  : moment.utc().format()
+              }
               onChange={(e) => {
                 const patient = state.patient;
                 dispatch({
                   type: 'set-patient',
                   value: {
-                    ...{ patient },
-                    ...{ admission: e },
+                    ...patient,
+                    ...{ admissionDate: e },
                   },
                 });
               }}
@@ -212,14 +147,18 @@ export default function RegisterPatient(props) {
               id="date-exit"
               label="Exit Date"
               format="MM/DD/YYYY"
-              value={state?.patient?.admission}
+              value={
+                state?.patient?.exitDate
+                  ? state?.patient?.exitDate
+                  : moment.utc().format()
+              }
               onChange={(e) => {
                 const patient = state.patient;
                 dispatch({
                   type: 'set-patient',
                   value: {
-                    ...{ patient },
-                    ...{ exit: e },
+                    ...patient,
+                    ...{ exitDate: e },
                   },
                 });
               }}
@@ -233,9 +172,78 @@ export default function RegisterPatient(props) {
           <Button
             variant="contained"
             color="primary"
-            onClick={() => {
+            onClick={async () => {
+              const patient = state.patient;
+              console.log(patient);
+              console.log(patient?.ssn);
               const _missing = checkMissing(state.patient);
               setErrors(_missing);
+              if (_missing.length > 0) {
+                setSnackBar(true);
+                setSnackBarMessage('Error: Missing parameters');
+              } else {
+                const params = {
+                  sql:
+                    'INSERT INTO patient (firstName,lastName,ssn,bed,age,sex,status,createdDate,updatedDate,admissionDate,exitDate) values (:firstName,:lastName,:ssn,:bed,:age,:sex,:status,:createdDate,:updatedDate,:admissionDate,:exitDate)',
+                  parameters: [
+                    {
+                      name: 'firstName',
+                      value: { stringValue: patient?.firstName },
+                    },
+                    {
+                      name: 'lastName',
+                      value: { stringValue: patient?.lastName },
+                    },
+                    { name: 'ssn', value: { stringValue: patient?.ssn } },
+                    {
+                      name: 'bed',
+                      value: { stringValue: patient?.bed ? patient?.bed : '' },
+                    },
+                    { name: 'age', value: { longValue: patient?.age } },
+                    { name: 'sex', value: { longValue: patient?.sex } },
+                    {
+                      name: 'status',
+                      value: {
+                        longValue: patient?.status ? patient?.status : 1,
+                      },
+                    },
+                    {
+                      name: 'createdDate',
+                      value: { stringValue: moment.utc().format('YYYY-MM-DD') },
+                    },
+                    {
+                      name: 'updatedDate',
+                      value: { stringValue: moment.utc().format('YYYY-MM-DD') },
+                    },
+                    {
+                      name: 'admissionDate',
+                      value: { stringValue: moment.utc().format('YYYY-MM-DD') },
+                    },
+                    {
+                      name: 'exitDate',
+                      value: { stringValue: moment.utc().format('YYYY-MM-DD') },
+                    },
+                  ],
+                };
+                await axios({
+                  method: 'post',
+                  url:
+                    'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+                  data: params,
+                })
+                  .then((res) => {
+                    console.log(res.data);
+                    setSnackBar(true);
+                    setSnackBarMessage('Successfully inserted data into DB');
+                    dispatch({
+                      type: 'set-patient',
+                      value: {},
+                    });
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                  });
+              }
             }}
           >
             Submit
