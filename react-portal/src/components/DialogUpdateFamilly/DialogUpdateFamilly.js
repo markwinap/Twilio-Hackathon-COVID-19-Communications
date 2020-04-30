@@ -8,14 +8,16 @@ import {
   TextField,
   DialogActions,
   Button,
-  FormControlLabel,
-  Switch,
-  MenuItem,
   Grid,
+  Box,
 } from '@material-ui/core';
+import axios from 'axios';
+import moment from 'moment';
 //STORE
 import { store } from '../../store.js';
-
+//UTILS
+import FamillyFields from '../../utils/FamillyFields';
+import FamillyRequiredFields from '../../utils/FamillyRequiredFieldsDialog';
 const useStyles = makeStyles((theme) => ({
   root: {
     flexGrow: 1,
@@ -30,97 +32,16 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const required = ['firstName', 'lastName', 'relationship', 'patient'];
-const relationship = [
-  {
-    value: 1,
-    label: 'Friend',
-  },
-  {
-    value: 2,
-    label: 'Spouse',
-  },
-  {
-    value: 3,
-    label: 'Parent',
-  },
-  {
-    value: 4,
-    label: 'Child',
-  },
-  {
-    value: 5,
-    label: 'Sibling',
-  },
-  {
-    value: 99,
-    label: 'Other',
-  },
-];
-const fields = [
-  {
-    label: 'First Name',
-    required: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 6,
-    value: 'firstName',
-  },
-  {
-    label: 'Last Name',
-    required: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 6,
-    value: 'lastName',
-  },
-  {
-    label: 'Relationship',
-    required: true,
-    select: true,
-    type: 'text',
-    xs: 12,
-    sm: 6,
-    md: 4,
-    value: 'relationship',
-    child: relationship.map((e) => (
-      <MenuItem key={e.value} value={e.value}>
-        {e.label}
-      </MenuItem>
-    )),
-  },
-  {
-    label: 'Email',
-    //required: true,
-    type: 'email',
-    xs: 6,
-    sm: 6,
-    md: 4,
-    value: 'email',
-  },
-  {
-    label: 'Mobile',
-    //required: true,
-    type: 'phone',
-    xs: 6,
-    sm: 6,
-    md: 4,
-    value: 'mobile',
-  },
-];
-
-DialogUpdateFamilly.propTypes = {
+DialogNewFamilly.propTypes = {
   open: PropTypes.bool,
   handleClose: PropTypes.func,
 };
-DialogUpdateFamilly.defaultProps = {
+DialogNewFamilly.defaultProps = {
   open: false,
   handleClose: () => {},
 };
 
-export default function DialogUpdateFamilly(props) {
+export default function DialogNewFamilly(props) {
   const classes = useStyles();
   const globalState = useContext(store);
   const { dispatch, state } = globalState;
@@ -128,7 +49,19 @@ export default function DialogUpdateFamilly(props) {
   const [notification, setNotification] = React.useState(false);
   const [publicNote, setPublicNote] = React.useState(false);
   const [Errors, setErrors] = React.useState([]);
-
+  function checkMissing(obj) {
+    let _temp = [];
+    for (let i of FamillyRequiredFields) {
+      if (!obj.hasOwnProperty(i)) {
+        _temp.push(i);
+      } else {
+        if (obj[i] === '') {
+          _temp.push(i);
+        }
+      }
+    }
+    return _temp;
+  }
   return (
     <Dialog
       open={props.open}
@@ -137,7 +70,7 @@ export default function DialogUpdateFamilly(props) {
       fullWidth
       maxWidth="sm"
     >
-      <DialogTitle id="dialog-familly-title">Uodate Familly Member</DialogTitle>
+      <DialogTitle id="dialog-familly-title">Update Familly Member</DialogTitle>
       <DialogContent dividers>
         <Grid
           spacing={3}
@@ -146,7 +79,7 @@ export default function DialogUpdateFamilly(props) {
           //justify="center"
           //alignItems="center"
         >
-          {fields.map((e, i) => (
+          {FamillyFields.map((e, i) => (
             <Grid
               item
               xs={e.xs}
@@ -162,13 +95,13 @@ export default function DialogUpdateFamilly(props) {
                 type={e?.type}
                 id={`register_patient_${e?.label}`}
                 label={e?.label}
-                value={state.patient[e?.value]}
+                value={state.family[e?.value] ? state.family[e?.value] : ''}
                 onChange={(f) => {
-                  const patient = state.patient;
+                  const family = state.family;
                   dispatch({
-                    type: 'set-patient',
+                    type: 'set-family',
                     value: {
-                      ...{ patient },
+                      ...family,
                       ...{ [e.value]: f.currentTarget.value },
                     },
                   });
@@ -184,7 +117,80 @@ export default function DialogUpdateFamilly(props) {
         <Button color="primary" onClick={props.handleClose}>
           Cancel
         </Button>
-        <Button color="secondary" onClick={props.handleClose}>
+        <Button
+          color="secondary"
+          onClick={async () => {
+            const selectedPatient = state.selectedPatient;
+            const family = state.family;
+            console.log(family);
+            const _missing = checkMissing(state.family);
+            setErrors(_missing);
+            if (_missing.length > 0) {
+            } else {
+              console.log('Not missing');
+              const params = {
+                sql:
+                  'UPDATE familly SET firstName=:firstName,lastName=:lastName,relationship=:relationship,email=:email,updatedDate=:updatedDate WHERE famillyId = :famillyId',
+                parameters: [
+                  {
+                    name: 'firstName',
+                    value: { stringValue: family?.firstName },
+                  },
+                  {
+                    name: 'lastName',
+                    value: { stringValue: family?.lastName },
+                  },
+                  {
+                    name: 'relationship',
+                    value: { longValue: family?.relationship },
+                  },
+                  {
+                    name: 'email',
+                    value: { stringValue: family?.email ? family?.email : '' },
+                  },
+                  {
+                    name: 'mobile',
+                    value: {
+                      stringValue: family?.mobile ? family?.mobile : '',
+                    },
+                  },
+                  {
+                    name: 'updatedDate',
+                    value: { stringValue: moment.utc().format('YYYY-MM-DD') },
+                  },
+                ],
+              };
+              await axios({
+                method: 'post',
+                url:
+                  'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+                data: params,
+              })
+                .then((res) => {
+                  console.log(res.data);
+
+                  dispatch({
+                    type: 'set-family-members',
+                    value: state.familyMembers.map((e) => {
+                      if (e.famillyId === family.famillyId) {
+                        return family;
+                      } else {
+                        return e;
+                      }
+                    }),
+                  });
+                  dispatch({
+                    type: 'set-family',
+                    value: {},
+                  });
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+              props.handleClose();
+            }
+          }}
+        >
           Update
         </Button>
       </DialogActions>

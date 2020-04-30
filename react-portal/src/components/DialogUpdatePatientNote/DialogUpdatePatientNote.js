@@ -10,8 +10,11 @@ import {
   Button,
   FormControlLabel,
   Switch,
+  Box,
 } from '@material-ui/core';
 //STORE
+import axios from 'axios';
+import moment from 'moment';
 import { store } from '../../store.js';
 
 const useStyles = makeStyles((theme) => ({
@@ -41,7 +44,6 @@ export default function DialogNewPatientNote(props) {
   const classes = useStyles();
   const globalState = useContext(store);
   const { dispatch, state } = globalState;
-
   return (
     <Dialog
       open={props.open}
@@ -49,7 +51,53 @@ export default function DialogNewPatientNote(props) {
       aria-labelledby="patient-note"
       fullWidth
     >
-      <DialogTitle id="patient-note-title">Update Patient Note</DialogTitle>
+      <DialogTitle id="patient-note-title">
+        <Box position="absolute">Update Patient Note</Box>
+        <Box right={10} position="absolute">
+          <Button
+            variant="outlined"
+            color="secondary"
+            size="small"
+            right={10}
+            onClick={async () => {
+              const selectedPatientNote = state.selectedPatientNote;
+              const params = {
+                sql: 'DELETE FROM notes WHERE noteId=:noteId',
+                parameters: [
+                  {
+                    name: 'noteId',
+                    value: { longValue: selectedPatientNote?.noteId },
+                  },
+                ],
+              };
+              await axios({
+                method: 'post',
+                url:
+                  'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+                data: params,
+              })
+                .then((res) => {
+                  console.log(res.data);
+
+                  dispatch({
+                    type: 'set-patient-notes',
+                    value: state.patientNotes.map((e) => {
+                      if (e.noteId !== selectedPatientNote.noteId) {
+                        return e;
+                      }
+                    }),
+                  });
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+              props.handleClose();
+            }}
+          >
+            Delete
+          </Button>
+        </Box>
+      </DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
@@ -57,7 +105,7 @@ export default function DialogNewPatientNote(props) {
           id="patientNote"
           label="Note"
           type="text"
-          value={state?.selectedPatientNote?.notes}
+          value={state?.selectedPatientNote?.note}
           onChange={(e) => {
             const selectedPatientNote = state.selectedPatientNote;
             dispatch({
@@ -65,7 +113,7 @@ export default function DialogNewPatientNote(props) {
               value: {
                 ...selectedPatientNote,
                 ...{
-                  notes: e.target.value,
+                  note: e.target.value,
                 },
               },
             });
@@ -98,7 +146,60 @@ export default function DialogNewPatientNote(props) {
         <Button color="primary" onClick={props.handleClose}>
           Cancel
         </Button>
-        <Button color="secondary" onClick={props.handleClose}>
+        <Button
+          color="secondary"
+          onClick={async () => {
+            const selectedPatient = state.selectedPatient;
+            const selectedPatientNote = state.selectedPatientNote;
+            const params = {
+              sql:
+                'UPDATE notes SET updatedDate=:updatedDate,public=:public,note=:note WHERE noteId = :noteId',
+              parameters: [
+                {
+                  name: 'noteId',
+                  value: { longValue: selectedPatientNote?.noteId },
+                },
+                {
+                  name: 'updatedDate',
+                  value: { stringValue: moment.utc().format('YYYY-MM-DD') },
+                },
+                {
+                  name: 'public',
+                  value: { longValue: selectedPatientNote?.public ? 1 : 0 },
+                },
+                {
+                  name: 'note',
+                  value: {
+                    stringValue: selectedPatientNote?.note,
+                  },
+                },
+              ],
+            };
+            await axios({
+              method: 'post',
+              url:
+                'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+              data: params,
+            })
+              .then((res) => {
+                console.log(res.data);
+                dispatch({
+                  type: 'set-patient-notes',
+                  value: state.patientNotes.map((e) => {
+                    if (e.noteId === selectedPatientNote.noteId) {
+                      return selectedPatientNote;
+                    } else {
+                      return e;
+                    }
+                  }),
+                });
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+            props.handleClose();
+          }}
+        >
           Update
         </Button>
       </DialogActions>

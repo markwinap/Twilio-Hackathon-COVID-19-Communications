@@ -11,6 +11,8 @@ import {
   FormControlLabel,
   Switch,
 } from '@material-ui/core';
+import axios from 'axios';
+import moment from 'moment';
 //STORE
 import { store } from '../../store.js';
 
@@ -88,7 +90,68 @@ export default function DialogUpdatePatientNote(props) {
         <Button color="primary" onClick={props.handleClose}>
           Cancel
         </Button>
-        <Button color="secondary" onClick={props.handleClose}>
+        <Button
+          color="secondary"
+          onClick={async () => {
+            const selectedPatient = state.selectedPatient;
+            const params = {
+              sql:
+                'INSERT INTO notes (createdDate, updatedDate, patientId, public, note) values (:createdDate, :updatedDate, :patientId, :public, :note)',
+              parameters: [
+                {
+                  name: 'patientId',
+                  value: { longValue: selectedPatient?.patientId },
+                },
+                {
+                  name: 'createdDate',
+                  value: { stringValue: moment.utc().format('YYYY-MM-DD') },
+                },
+                {
+                  name: 'updatedDate',
+                  value: { stringValue: moment.utc().format('YYYY-MM-DD') },
+                },
+                {
+                  name: 'public',
+                  value: { longValue: publicNote ? 1 : 0 },
+                },
+                {
+                  name: 'note',
+                  value: {
+                    stringValue: note,
+                  },
+                },
+              ],
+            };
+            await axios({
+              method: 'post',
+              url:
+                'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+              data: params,
+            })
+              .then((res) => {
+                console.log(res.data);
+                let temp = state.patientNotes;
+                temp.push({
+                  noteId: res.data.generatedFields[0].longValue,
+                  updatedDate: moment.utc().format('YYYY-MM-DD'),
+                  createdDate: moment.utc().format('YYYY-MM-DD'),
+                  public: publicNote ? 1 : 0,
+                  note: note,
+                });
+                dispatch({
+                  type: 'set-patient-notes',
+                  value: temp,
+                });
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+            setNote('');
+            setPublicNote(false);
+            setNotification(false);
+            props.handleClose();
+          }}
+        >
           Submit
         </Button>
       </DialogActions>

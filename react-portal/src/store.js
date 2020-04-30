@@ -4,6 +4,8 @@ import React, { createContext, useReducer } from 'react';
 const initialState = {
   page: 'main',
   data: [],
+  patientNotes: [],
+  familyMembers: [],
   patient: {},
   family: {},
   selectedPatient: {},
@@ -30,6 +32,10 @@ const StateProvider = ({ children }) => {
         return { ...state, ...{ page: action.value } };
       case 'set-patient':
         return { ...state, ...{ patient: action.value } };
+      case 'set-family-members':
+        return { ...state, ...{ familyMembers: action.value } };
+      case 'set-patient-notes':
+        return { ...state, ...{ patientNotes: action.value } };
       case 'set-selected-patient':
         return { ...state, ...{ selectedPatient: action.value } };
       case 'set-selected-patient-note':

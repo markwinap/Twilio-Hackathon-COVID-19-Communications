@@ -51,6 +51,9 @@ const useStyles = makeStyles((theme) => ({
     borderColor: '#f8f8f8 !important',
     borderRightStyle: 'solid',
   },
+  chip: {
+    margin: 5,
+  },
 }));
 
 DialogPatient.propTypes = {
@@ -61,49 +64,6 @@ DialogPatient.defaultProps = {
   open: false,
   handleClose: () => {},
 };
-const familYMembers = [
-  {
-    firstName: 'test',
-    lastName: 'test2',
-    relationship: 1,
-    email: 'test',
-    mobile: '1212',
-  },
-];
-const patientNotes = [
-  {
-    date: 1588035034,
-    notes: 'This is a test note',
-    public: true,
-  },
-  {
-    date: 1588035034,
-    notes:
-      'This is a public not to let the family know that his patient is feeling better',
-    public: false,
-  },
-  {
-    date: 1588035034,
-    notes: 'This is a test public note',
-    public: true,
-  },
-  {
-    date: 1588035034,
-    notes: 'This is a test note',
-    public: true,
-  },
-  {
-    date: 1588035034,
-    notes:
-      'This is a public not to let the family know that his patient is feeling better',
-    public: false,
-  },
-  {
-    date: 1588035034,
-    notes: 'This is a test public note',
-    public: true,
-  },
-];
 
 export default function DialogPatient(props) {
   const classes = useStyles();
@@ -121,11 +81,89 @@ export default function DialogPatient(props) {
     console.log('LOADED THIS');
     if (props.open) {
       console.log('OPEN');
+      console.log(state);
+      getNotes();
+      getFamily();
+    }
+    async function getFamily() {
+      const selectedPatient = state.selectedPatient;
+      const params = {
+        sql: 'SELECT * FROM familly WHERE patientId=:patientId',
+        parameters: [
+          {
+            name: 'patientId',
+            value: { longValue: selectedPatient?.patientId },
+          },
+        ],
+      };
+      await axios({
+        method: 'post',
+        url:
+          'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+        data: params,
+      })
+        .then((res) => {
+          console.log(res.data);
+          dispatch({
+            type: 'set-family-members',
+            value: res.data.records.map((e) => ({
+              famillyId: e[0].longValue,
+              firstName: e[1].stringValue,
+              lastName: e[2].stringValue,
+              relationship: e[3].longValue,
+              email: e[4].stringValue,
+              mobile: e[5].stringValue,
+              createdDate: e[6].stringValue,
+              updatedDate: e[7].stringValue,
+              patientId: e[8].longValue,
+            })),
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+    async function getNotes() {
+      const selectedPatient = state.selectedPatient;
+      const params = {
+        sql: 'SELECT * FROM notes WHERE patientId=:patientId',
+        parameters: [
+          {
+            name: 'patientId',
+            value: { longValue: selectedPatient?.patientId },
+          },
+        ],
+      };
+      await axios({
+        method: 'post',
+        url:
+          'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+        data: params,
+      })
+        .then((res) => {
+          console.log(res.data);
+
+          dispatch({
+            type: 'set-patient-notes',
+            value: res.data.records.map((e) => ({
+              noteId: e[0].longValue,
+              createdDate: e[1].stringValue,
+              updatedDate: e[2].stringValue,
+              patientId: e[3].longValue,
+              public: e[4].booleanValue,
+              note: e[5].stringValue,
+            })),
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     }
     return () => {
       // Clean up the subscription
       //subscription.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.open]);
 
   function checkMissing(obj) {
@@ -272,16 +310,52 @@ export default function DialogPatient(props) {
                       <Add />
                     </IconButton>
                   </Typography>
-                  {familYMembers.map((e, i) => (
+                  {state.familyMembers.map((e, i) => (
                     <Chip
                       key={`${e.firstName}${e.lastName}`}
                       label={`${e.firstName} ${e.lastName}`}
                       variant="outlined"
-                      onDelete={() => {
-                        console.log('Delete family ');
+                      className={classes.chip}
+                      size="small"
+                      onDelete={async () => {
+                        const family = state.family;
+                        const params = {
+                          sql: 'DELETE FROM familly WHERE famillyId=:famillyId',
+                          parameters: [
+                            {
+                              name: 'famillyId',
+                              value: { longValue: e?.famillyId },
+                            },
+                          ],
+                        };
+                        await axios({
+                          method: 'post',
+                          url:
+                            'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+                          data: params,
+                        })
+                          .then((res) => {
+                            console.log(res.data);
+                            dispatch({
+                              type: 'set-patient-notes',
+                              value: state.patientNotes.map((f) => {
+                                if (f.famillyId !== e.famillyId) {
+                                  return f;
+                                }
+                              }),
+                            });
+                          })
+                          .catch((err) => {
+                            console.log(err);
+                          });
                       }}
                       onClick={() => {
                         console.log('Update family ');
+                        console.log(e);
+                        dispatch({
+                          type: 'set-family',
+                          value: e,
+                        });
                         setUpdateFamilly(true);
                       }}
                       color="primary"
@@ -309,32 +383,43 @@ export default function DialogPatient(props) {
                 aria-label="patient-notes"
                 className={classes.patitentNotes}
               >
-                {patientNotes.map((e, i) => {
-                  return (
-                    <ListItem
-                      button
-                      onClick={() => {
-                        dispatch({
-                          type: 'set-selected-patient-note',
-                          value: e,
-                        });
-                        setNoteUpdate(true);
-                      }}
-                      //selected={selectedIndex === 3}
-                      //onClick={(event) => handleListItemClick(event, 3)}
-                    >
-                      <ListItemText
-                        primary="Oui Oui"
-                        secondary=" — Do you have Paris recommendations? Have you ever…"
-                      />
-                      {e.public ? (
-                        <ListItemSecondaryAction>
-                          <Visibility />
-                        </ListItemSecondaryAction>
-                      ) : null}
-                    </ListItem>
-                  );
-                })}
+                {state.patientNotes
+                  .sort((a, b) => {
+                    if (a.noteId > b.noteId) {
+                      return -1;
+                    }
+                    if (a.noteId < b.noteId) {
+                      return 1;
+                    }
+                    return 0;
+                  })
+                  .map((e, i) => {
+                    return (
+                      <ListItem
+                        button
+                        key={`patient-notes-${i}`}
+                        onClick={() => {
+                          dispatch({
+                            type: 'set-selected-patient-note',
+                            value: e,
+                          });
+                          setNoteUpdate(true);
+                        }}
+                        //selected={selectedIndex === 3}
+                        //onClick={(event) => handleListItemClick(event, 3)}
+                      >
+                        <ListItemText
+                          primary={e?.createdDate}
+                          secondary={e?.note}
+                        />
+                        {e?.public ? (
+                          <ListItemSecondaryAction>
+                            <Visibility />
+                          </ListItemSecondaryAction>
+                        ) : null}
+                      </ListItem>
+                    );
+                  })}
               </List>
             </Grid>
           </Grid>
