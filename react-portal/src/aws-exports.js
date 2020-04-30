@@ -3,10 +3,10 @@
 const awsmobile = {
   aws_project_region: 'us-west-2',
   aws_cognito_identity_pool_id:
-    'us-west-2:7ccdf95b-4759-422b-a2da-95237f97c3dd',
+    'us-west-2:a2eb48fc-6f49-49a1-b111-fd3482f80043',
   aws_cognito_region: 'us-west-2',
-  aws_user_pools_id: 'us-west-2_UJDL6vQ29',
-  aws_user_pools_web_client_id: '6tuhtsgjm4l43i5179cla27ebn',
+  aws_user_pools_id: 'us-west-2_suNGk8GOZ',
+  aws_user_pools_web_client_id: '5u2cgop5aghadug1do59rp8s5o',
   oauth: {},
 };
 

@@ -12,9 +12,15 @@ import {
   ExpansionPanelSummary,
   ExpansionPanelDetails,
 } from '@material-ui/core';
-import { PhotoCamera, HighlightOff, ExpandMore } from '@material-ui/icons';
-
+import { HighlightOff, ExpandMore } from '@material-ui/icons';
+import { Auth } from 'aws-amplify';
+import axios from 'axios';
+import moment from 'moment';
+//STORE
 import { store } from '../../store.js';
+//UTILS
+import SearchConditions from '../../utils/SearchConditions';
+import SearchFilters from '../../utils/SearchFilters';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -55,63 +61,11 @@ const useStyles = makeStyles((theme) => ({
     marginRight: 5,
   },
 }));
-const condition = [
-  {
-    value: 1,
-    label: 'is',
-  },
-  {
-    value: 2,
-    label: 'is not',
-  },
-  {
-    value: 3,
-    label: 'contains',
-  },
-  {
-    value: 4,
-    label: 'does not contain',
-  },
-];
-const filters = [
-  {
-    value: 1,
-    label: 'First Name',
-  },
-  {
-    value: 2,
-    label: 'Last Name',
-  },
-  {
-    value: 3,
-    label: 'Sex',
-  },
-  {
-    value: 4,
-    label: 'Age',
-  },
-  {
-    value: 5,
-    label: 'SSN',
-  },
-];
+
 export default function PatientTable() {
-  const [value, setValue] = React.useState(0);
-  const [filterArr, setFilterArr] = React.useState([
-    {
-      field: 1,
-      condition: 1,
-      value: '',
-      and: false,
-    },
-  ]);
   const classes = useStyles();
   const globalState = useContext(store);
   const { dispatch, state } = globalState;
-
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
 
   return (
     <div className={classes.root}>
@@ -156,7 +110,7 @@ export default function PatientTable() {
                           });
                         }}
                       >
-                        {filters.map((f) => (
+                        {SearchFilters.map((f) => (
                           <MenuItem key={f.value} value={f.value}>
                             {f.label}
                           </MenuItem>
@@ -178,7 +132,7 @@ export default function PatientTable() {
                           });
                         }}
                       >
-                        {condition.map((c) => (
+                        {SearchConditions.map((c) => (
                           <MenuItem key={c.value} value={c.value}>
                             {c.label}
                           </MenuItem>
@@ -270,6 +224,56 @@ export default function PatientTable() {
                 size="medium"
                 //className={classes.button}
                 //color="Submit"
+                onClick={async () => {
+                  console.log(state.filters);
+                  console.log(getSQL(state.filters));
+                  console.log(getParams(state.filters));
+
+                  const params = {
+                    sql: getSQL(state.filters),
+                    parameters: getParams(state.filters),
+                  };
+                  await axios({
+                    method: 'post',
+                    headers: {
+                      Authorization: await Auth.currentSession()
+                        .then((res) => res.idToken.jwtToken)
+                        .catch((err) => {
+                          console.log(err);
+                          return '';
+                        }),
+                    },
+                    url:
+                      'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
+                    data: params,
+                  })
+                    .then((res) => {
+                      console.log(res.data);
+                      let records = res.data.records;
+                      records = records.map((e) => ({
+                        patientId: e[0].longValue,
+                        firstName: e[1].stringValue,
+                        lastName: e[2].stringValue,
+                        name: `${e[1].stringValue} ${e[2].stringValue}`,
+                        ssn: e[3].stringValue,
+                        bed: e[4].stringValue,
+                        age: e[5].longValue,
+                        sex: e[6].longValue,
+                        status: e[7].longValue,
+                        createdDate: e[8].stringValue,
+                        updatedDate: e[9].stringValue,
+                        admissionDate: e[10].stringValue,
+                        exitDate: e[11].stringValue,
+                      }));
+                      dispatch({
+                        type: 'set-data',
+                        value: records,
+                      });
+                    })
+                    .catch((err) => {
+                      console.log(err);
+                    });
+                }}
               >
                 Submit
               </Button>
@@ -280,3 +284,47 @@ export default function PatientTable() {
     </div>
   );
 }
+function getSQL(arr) {
+  let resp = 'SELECT * FROM patient';
+  for (let i in arr) {
+    resp += `${arr[i].and ? ' AND' : ''}${arr[i].or ? ' OR' : ''} WHERE ${
+      SearchFilters[arr[i].field].field
+    } ${SearchConditions[arr[i].condition].condition} :field${i}`;
+  }
+  return resp;
+}
+function getParams(arr) {
+  let resp = [];
+  for (let i in arr) {
+    const value = arr[i].value;
+    resp.push({
+      name: `field${i}`,
+      value: {
+        stringValue: SearchConditions[arr[i].condition].func(value),
+      },
+    });
+  }
+  return resp;
+}
+/*
+is: = WHERE country = 'USA'
+is not: <>, !=  WHERE country <> 'USA'
+conaints: WHERE `column` LIKE '%${value}%' 
+does not coaint: WHERE `column` NOT LIKE '%${value}%'
+starts with WHERE firstName LIKE 'a%';
+
+
+SELECT * FROM patient LIMIT 10
+
+and: false
+condition: 1
+field: 1
+or: false
+value: "juan"
+
+and: true
+condition: 1
+field: 2
+or: false
+value: "perez"
+*/

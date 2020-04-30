@@ -13,6 +13,7 @@ import {
   MenuItem,
   Grid,
 } from '@material-ui/core';
+import { Auth } from 'aws-amplify';
 import axios from 'axios';
 import moment from 'moment';
 //STORE
@@ -174,6 +175,14 @@ export default function DialogNewFamilly(props) {
               };
               await axios({
                 method: 'post',
+                headers: {
+                  Authorization: await Auth.currentSession()
+                    .then((res) => res.idToken.jwtToken)
+                    .catch((err) => {
+                      console.log(err);
+                      return '';
+                    }),
+                },
                 url:
                   'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
                 data: params,

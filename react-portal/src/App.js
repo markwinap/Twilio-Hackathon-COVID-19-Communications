@@ -28,7 +28,25 @@ const theme = createMuiTheme({
 });
 
 const signUpConfig = {
+  header: 'Create an Account',
   hideAllDefaults: true,
+  defaultCountryCode: '1',
+  signUpFields: [
+    {
+      label: 'Email',
+      key: 'username',
+      required: true,
+      displayOrder: 2,
+      type: 'email',
+    },
+    {
+      label: 'Password',
+      key: 'password',
+      required: true,
+      displayOrder: 3,
+      type: 'password',
+    },
+  ],
 };
 
 function App() {
@@ -39,5 +57,5 @@ function App() {
   );
 }
 
-//export default withAuthenticator(App, { signUpConfig });
-export default App;
+export default withAuthenticator(App, { signUpConfig });
+//export default App;

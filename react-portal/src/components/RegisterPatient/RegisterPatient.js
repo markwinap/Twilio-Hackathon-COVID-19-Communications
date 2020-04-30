@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import { Grid, Typography, TextField, Button } from '@material-ui/core';
+import { Auth } from 'aws-amplify';
 import axios from 'axios';
 import moment from 'moment';
 import MomentUtils from '@date-io/moment';
@@ -225,6 +226,14 @@ export default function RegisterPatient(props) {
                 };
                 await axios({
                   method: 'post',
+                  headers: {
+                    Authorization: await Auth.currentSession()
+                      .then((res) => res.idToken.jwtToken)
+                      .catch((err) => {
+                        console.log(err);
+                        return '';
+                      }),
+                  },
                   url:
                     'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/aurora',
                   data: params,

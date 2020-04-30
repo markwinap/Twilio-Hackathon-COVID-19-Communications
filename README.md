@@ -114,3 +114,27 @@ curl --location --request POST 'https://host/DEV/aurora' \
     ]
 }'
 ```
+
+## Cognito
+
+### Identity Pool
+
+Id:
+us-west-2:a2eb48fc-6f49-49a1-b111-fd3482f80043
+ARN
+arn:aws:cognito-identity:us-west-2:843132870052:identitypool/us-west-2:a2eb48fc-6f49-49a1-b111-fd3482f80043
+
+### User Pool
+
+Id:
+us-west-2_suNGk8GOZ
+ARN:
+arn:aws:cognito-idp:us-west-2:843132870052:userpool/us-west-2_suNGk8GOZ
+
+App Clients
+WebClient
+App Id:
+5u2cgop5aghadug1do59rp8s5o
+AppClient
+App Id:
+7pqjad5dlqbiqnfp7aqqdluork

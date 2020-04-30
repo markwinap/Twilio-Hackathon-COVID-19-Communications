@@ -3,9 +3,14 @@
 const AWS = require('aws-sdk');
 const rdsdataservice = new AWS.RDSDataService();
 exports.handler = async (event) => {
+  console.log(JSON.stringify(event));
   let response = {
     statusCode: 200,
-    headers: { 'Access-Control-Allow-Origin': '*' },
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers':
+        'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+    },
   };
   const body = JSON.parse(event.body);
   const params = {
@@ -17,7 +22,10 @@ exports.handler = async (event) => {
   };
   const query = await executeStatement(params)
     .then((res) => res)
-    .catch((err) => err);
+    .catch((err) => {
+      response.statusCode = 500;
+      return err;
+    });
   response.body = JSON.stringify(query);
   return response;
 };
