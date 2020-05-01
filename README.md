@@ -1,5 +1,74 @@
 # Twilio-Hackathon-COVID-19-Communications
 
+## Folder Structure
+
+```sh
+├───diagrams
+├───lambda
+│   ├───covid19-rds-service
+│   └───covid19-twilio-service
+│       └───node_modules
+│           ├───axios
+│           │   ├───dist
+│           │   └───lib
+│           │       ├───adapters
+│           │       ├───cancel
+│           │       ├───core
+│           │       └───helpers
+│           ├───debug
+│           │   └───src
+│           ├───follow-redirects
+│           └───ms
+└───react-portal
+    ├───public
+    └───src
+        ├───components
+        │   ├───CardOption
+        │   ├───DialogNewFamilly
+        │   ├───DialogNewPatientNote
+        │   ├───DialogPatient
+        │   ├───DialogUpdateFamilly
+        │   ├───DialogUpdatePatientNote
+        │   ├───FabBack
+        │   ├───GridOptions
+        │   ├───HeroMessage
+        │   ├───PatientTable
+        │   ├───RegisterFamily
+        │   ├───RegisterPatient
+        │   ├───SearchOptions
+        │   ├───SnackBarNotification
+        │   ├───TableHeadPatient
+        │   ├───TabPanel
+        │   └───ToolbarTop
+        ├───hooks
+        │   └───Debounce
+        ├───icons
+        ├───pages
+        │   ├───Main
+        │   ├───Patient
+        │   └───Register
+        └───utils
+```
+
+### Local Setup
+
+```sh
+git https://github.com/markwinap/Twilio-Hackathon-COVID-19-Communications.git
+cd Twilio-Hackathon-COVID-19-Communications\react-portal
+```
+
+### Install Portal dependencies
+
+```sh
+npm install
+```
+
+### Run portal locally
+
+```sh
+npm run
+```
+
 ## LAMBDA
 
 - covid19-rds-service

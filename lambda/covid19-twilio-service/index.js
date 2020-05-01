@@ -71,11 +71,11 @@ exports.handler = async (event) => {
   return response;
 };
 function getMobileList(arr) {
-  return arr.filter((e) => e.mobile !== '').map((e) => e.mobile);
+  return arr.filter((e) => e.mobile !== '' && e.mobile).map((e) => e.mobile);
 }
 function getEmailList(arr) {
   return arr
-    .filter((e) => e.email !== '')
+    .filter((e) => e.email !== '' && e.email)
     .map((e) => ({
       email: e.email,
       name: `${e.firstName} ${e.lastName}`,
