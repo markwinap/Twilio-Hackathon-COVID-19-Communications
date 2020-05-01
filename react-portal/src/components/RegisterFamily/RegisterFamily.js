@@ -270,7 +270,7 @@ export default function RegisterFamily(props) {
               } else {
                 const params = {
                   sql:
-                    'INSERT INTO familly (firstName,lastName,relationship,email,mobile,createdDate,updatedDate,patientId) values (:firstName,:lastName,:relationship,:email,mobile,:createdDate,:updatedDate,:patientId)',
+                    'INSERT INTO familly (firstName,lastName,relationship,email,mobile,createdDate,updatedDate,patientId) values (:firstName,:lastName,:relationship,:email,:mobile,:createdDate,:updatedDate,:patientId)',
                   parameters: [
                     {
                       name: 'firstName',

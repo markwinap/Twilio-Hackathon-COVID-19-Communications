@@ -2,7 +2,8 @@
 
 ## LAMBDA
 
-covid19-rds-service
+- covid19-rds-service
+- covid19-twilio-service
 
 ## RDS
 
@@ -113,6 +114,14 @@ curl --location --request POST 'https://host/DEV/aurora' \
       { "name": "updatedDate", "value": { "stringValue": "2020-04-30" } }
     ]
 }'
+```
+
+### Send Notifications
+
+```sh
+curl --location --request POST 'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/twilio' \
+--header 'Content-Type: application/json' \
+--data-raw '{"familyMembers":[{"famillyId":4,"firstName":"Marco","lastName":"Martinez","relationship":1,"email":"markwinap@gmail.com","mobile":"","createdDate":"2020-05-01","updatedDate":"2020-05-01","patientId":4},{"famillyId":5,"firstName":"oswaldo","lastName":"Martinnez","relationship":1,"email":"","mobile":"","createdDate":"2020-05-01","updatedDate":"2020-05-01","patientId":4},{"famillyId":6,"firstName":"Simple","lastName":"test","relationship":3,"email":"test@test.com","mobile":"+524494382517","createdDate":"2020-05-01","updatedDate":"2020-05-01","patientId":4}],"selectedPatient":{"patientId":4,"firstName":"Chucho","lastName":"Gonzalez","name":"Chucho Gonzalez","ssn":"4561","bed":"TTT3","age":20,"sex":0,"status":1,"createdDate":"2020-04-29","updatedDate":"2020-04-30","admissionDate":"2020-04-29","exitDate":"2020-04-29"},"note":"Patient is feeling a lot better"}'
 ```
 
 ## Cognito

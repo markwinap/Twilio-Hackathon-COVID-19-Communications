@@ -225,7 +225,7 @@ export default function DialogPatient(props) {
         <DialogTitle id="dialog-patient-title">{`Patient - ${state?.selectedPatient.firstName} ${state?.selectedPatient.lastName}`}</DialogTitle>
         <DialogContent dividers>
           <Grid spacing={3} container>
-            <Grid item xs={6} className={classes.boxBorder}>
+            <Grid item xs={8} className={classes.boxBorder}>
               <Grid
                 spacing={3}
                 container
@@ -322,6 +322,10 @@ export default function DialogPatient(props) {
                       aria-label="add-note"
                       onClick={() => {
                         setFamilly(true);
+                        dispatch({
+                          type: 'set-family',
+                          value: {},
+                        });
                       }}
                     >
                       <Add />
@@ -362,9 +366,9 @@ export default function DialogPatient(props) {
                           .then((res) => {
                             console.log(res.data);
                             dispatch({
-                              type: 'set-patient-notes',
-                              value: state.patientNotes.map((f) => {
-                                if (f.famillyId !== e.famillyId) {
+                              type: 'set-family-members',
+                              value: state.familyMembers.map((f) => {
+                                if (f?.famillyId !== e?.famillyId) {
                                   return f;
                                 }
                               }),
@@ -389,7 +393,7 @@ export default function DialogPatient(props) {
                 </Grid>
               </Grid>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={4}>
               <Typography variant="h5" gutterBottom>
                 Notes
                 <IconButton

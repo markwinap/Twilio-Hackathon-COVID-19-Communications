@@ -155,6 +155,33 @@ export default function DialogUpdatePatientNote(props) {
               .catch((err) => {
                 console.log(err);
               });
+            console.log(state.familyMembers);
+            if (notification) {
+              await axios({
+                method: 'post',
+                headers: {
+                  Authorization: await Auth.currentSession()
+                    .then((res) => res.idToken.jwtToken)
+                    .catch((err) => {
+                      console.log(err);
+                      return '';
+                    }),
+                },
+                url:
+                  'https://w1dms5jz5f.execute-api.us-west-2.amazonaws.com/DEV/twilio',
+                data: {
+                  familyMembers: state.familyMembers,
+                  selectedPatient: state.selectedPatient,
+                  note: note,
+                },
+              })
+                .then((res) => {
+                  console.log(res.data);
+                })
+                .catch((err) => {
+                  console.log(err);
+                });
+            }
             setNote('');
             setPublicNote(false);
             setNotification(false);

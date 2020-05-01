@@ -107,7 +107,7 @@ export default function DialogNewFamilly(props) {
                     type: 'set-family',
                     value: {
                       ...family,
-                      ...{ [e.value]: f.currentTarget.value },
+                      ...{ [e.value]: f.target.value },
                     },
                   });
                 }}
@@ -135,7 +135,7 @@ export default function DialogNewFamilly(props) {
               console.log('Not missing');
               const params = {
                 sql:
-                  'INSERT INTO familly (firstName,lastName,relationship,email,mobile,createdDate,updatedDate,patientId) values (:firstName,:lastName,:relationship,:email,mobile,:createdDate,:updatedDate,:patientId)',
+                  'INSERT INTO familly (firstName,lastName,relationship,email,mobile,createdDate,updatedDate,patientId) values (:firstName,:lastName,:relationship,:email,:mobile,:createdDate,:updatedDate,:patientId)',
                 parameters: [
                   {
                     name: 'firstName',

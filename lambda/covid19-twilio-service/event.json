@@ -1,0 +1,81 @@
+{
+  "resource": "/twilio",
+  "path": "/twilio",
+  "httpMethod": "POST",
+  "headers": {
+    "accept": "application/json, text/plain, */*",
+    "accept-encoding": "gzip, deflate, br",
+    "accept-language": "en-US,en;q=0.9,es-419;q=0.8,es;q=0.7,fr;q=0.6",
+    "Authorization": "eyJraWQiOiI1aGZpVjFsbWNrQm5JalM5eHZQNjV4cGkyc09Wa2pyT3pucHd1djdOZjVnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiI3ZmI5MmZjNy1mNGM5LTRiZTItYmFkMy00NmMwNGM4ZGEwYTMiLCJhdWQiOiI1dTJjZ29wNWFnaGFkdWcxZG81OXJwOHM1byIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJldmVudF9pZCI6ImNiYmQ1NjI1LTU2YmItNDRlNi1iZjQ5LTA5YjBkMGJkZGIwZSIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNTg4Mjk0ODI0LCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtd2VzdC0yLmFtYXpvbmF3cy5jb21cL3VzLXdlc3QtMl9zdU5HazhHT1oiLCJjb2duaXRvOnVzZXJuYW1lIjoiN2ZiOTJmYzctZjRjOS00YmUyLWJhZDMtNDZjMDRjOGRhMGEzIiwiZXhwIjoxNTg4Mjk4NDI5LCJpYXQiOjE1ODgyOTQ4MjksImVtYWlsIjoibWFya3dpbmFwQGdtYWlsLmNvbSJ9.1BAagGbXovYfX0xwRndSum5DzGlVlusYCcQ5uGRIU_X4zlrRzrsWogxX9dmxy24Q9V78ke3UcP42Jujvrxu9VLjFYQVSU60BvjZmttd-L-ApK97OL1jfLS491A6X388m4jRksqF-jJcv9A1q8SGNsdtcZHIjzPUUd-743dBeGB_-rH_It054tUg5ZTHzWBfxrpsaNOqFkQIZItP-eatFLp9fRnDcOCQ8OgXGsZFDGNJA1-L-tUf56EQDKkDlSRAdjtKHuolW7duukS9z2qgurIn56uFiUUvVnk5CynsReTJzuKDT8cpRR1kZ_gTiZXeCFTubj4SviTfUzQ4CI4qh3w",
+    "content-type": "application/json;charset=UTF-8",
+    "Host": "w1dms5jz5f.execute-api.us-west-2.amazonaws.com",
+    "origin": "http://localhost:3000",
+    "referer": "http://localhost:3000/",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "cross-site",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36",
+    "X-Amzn-Trace-Id": "Root=1-5eab7b06-1dcf37c25b2698a2072818bc",
+    "X-Forwarded-For": "187.237.25.14",
+    "X-Forwarded-Port": "443",
+    "X-Forwarded-Proto": "https"
+  },
+  "multiValueHeaders": {
+    "accept": ["application/json, text/plain, */*"],
+    "accept-encoding": ["gzip, deflate, br"],
+    "accept-language": ["en-US,en;q=0.9,es-419;q=0.8,es;q=0.7,fr;q=0.6"],
+    "Authorization": [
+      "eyJraWQiOiI1aGZpVjFsbWNrQm5JalM5eHZQNjV4cGkyc09Wa2pyT3pucHd1djdOZjVnPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiI3ZmI5MmZjNy1mNGM5LTRiZTItYmFkMy00NmMwNGM4ZGEwYTMiLCJhdWQiOiI1dTJjZ29wNWFnaGFkdWcxZG81OXJwOHM1byIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJldmVudF9pZCI6ImNiYmQ1NjI1LTU2YmItNDRlNi1iZjQ5LTA5YjBkMGJkZGIwZSIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNTg4Mjk0ODI0LCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtd2VzdC0yLmFtYXpvbmF3cy5jb21cL3VzLXdlc3QtMl9zdU5HazhHT1oiLCJjb2duaXRvOnVzZXJuYW1lIjoiN2ZiOTJmYzctZjRjOS00YmUyLWJhZDMtNDZjMDRjOGRhMGEzIiwiZXhwIjoxNTg4Mjk4NDI5LCJpYXQiOjE1ODgyOTQ4MjksImVtYWlsIjoibWFya3dpbmFwQGdtYWlsLmNvbSJ9.1BAagGbXovYfX0xwRndSum5DzGlVlusYCcQ5uGRIU_X4zlrRzrsWogxX9dmxy24Q9V78ke3UcP42Jujvrxu9VLjFYQVSU60BvjZmttd-L-ApK97OL1jfLS491A6X388m4jRksqF-jJcv9A1q8SGNsdtcZHIjzPUUd-743dBeGB_-rH_It054tUg5ZTHzWBfxrpsaNOqFkQIZItP-eatFLp9fRnDcOCQ8OgXGsZFDGNJA1-L-tUf56EQDKkDlSRAdjtKHuolW7duukS9z2qgurIn56uFiUUvVnk5CynsReTJzuKDT8cpRR1kZ_gTiZXeCFTubj4SviTfUzQ4CI4qh3w"
+    ],
+    "content-type": ["application/json;charset=UTF-8"],
+    "Host": ["w1dms5jz5f.execute-api.us-west-2.amazonaws.com"],
+    "origin": ["http://localhost:3000"],
+    "referer": ["http://localhost:3000/"],
+    "sec-fetch-dest": ["empty"],
+    "sec-fetch-mode": ["cors"],
+    "sec-fetch-site": ["cross-site"],
+    "User-Agent": [
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36"
+    ],
+    "X-Amzn-Trace-Id": ["Root=1-5eab7b06-1dcf37c25b2698a2072818bc"],
+    "X-Forwarded-For": ["187.237.25.14"],
+    "X-Forwarded-Port": ["443"],
+    "X-Forwarded-Proto": ["https"]
+  },
+  "queryStringParameters": null,
+  "multiValueQueryStringParameters": null,
+  "pathParameters": null,
+  "stageVariables": null,
+  "requestContext": {
+    "resourceId": "gnacg5",
+    "resourcePath": "/twilio",
+    "httpMethod": "POST",
+    "extendedRequestId": "L1ApEEQPPHcFzUw=",
+    "requestTime": "01/May/2020:01:27:34 +0000",
+    "path": "/DEV/twilio",
+    "accountId": "843132870052",
+    "protocol": "HTTP/1.1",
+    "stage": "DEV",
+    "domainPrefix": "w1dms5jz5f",
+    "requestTimeEpoch": 1588296454738,
+    "requestId": "d0b6b784-a6e8-46a9-bce5-42048e8a26b0",
+    "identity": {
+      "cognitoIdentityPoolId": null,
+      "accountId": null,
+      "cognitoIdentityId": null,
+      "caller": null,
+      "sourceIp": "187.237.25.14",
+      "principalOrgId": null,
+      "accessKey": null,
+      "cognitoAuthenticationType": null,
+      "cognitoAuthenticationProvider": null,
+      "userArn": null,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.129 Safari/537.36",
+      "user": null
+    },
+    "domainName": "w1dms5jz5f.execute-api.us-west-2.amazonaws.com",
+    "apiId": "w1dms5jz5f"
+  },
+  "body": "{\"familyMembers\":[{\"famillyId\":4,\"firstName\":\"Marco\",\"lastName\":\"Martinez\",\"relationship\":1,\"email\":\"markwinap@gmail.com\",\"createdDate\":\"2020-05-01\",\"updatedDate\":\"2020-05-01\",\"patientId\":4},{\"famillyId\":5,\"firstName\":\"oswaldo\",\"lastName\":\"Martinnez\",\"relationship\":1,\"email\":\"zergpolo88@gmail.com\",\"createdDate\":\"2020-05-01\",\"updatedDate\":\"2020-05-01\",\"patientId\":4},{\"famillyId\":6,\"firstName\":\"Simple\",\"lastName\":\"test\",\"relationship\":3,\"email\":\"test@test.com\",\"createdDate\":\"2020-05-01\",\"updatedDate\":\"2020-05-01\",\"patientId\":4}],\"selectedPatient\":{\"patientId\":4,\"firstName\":\"Chucho\",\"lastName\":\"Gonzalez\",\"name\":\"Chucho Gonzalez\",\"ssn\":\"4561\",\"bed\":\"TTT3\",\"age\":20,\"sex\":0,\"status\":1,\"createdDate\":\"2020-04-29\",\"updatedDate\":\"2020-04-30\",\"admissionDate\":\"2020-04-29\",\"exitDate\":\"2020-04-29\"},\"note\":\"Another test\"}",
+  "isBase64Encoded": false
+}

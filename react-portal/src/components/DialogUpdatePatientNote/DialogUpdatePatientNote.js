@@ -62,6 +62,8 @@ export default function DialogNewPatientNote(props) {
             right={10}
             onClick={async () => {
               const selectedPatientNote = state.selectedPatientNote;
+              console.log(state.patientNotes);
+              console.log(state.selectedPatientNote);
               const params = {
                 sql: 'DELETE FROM notes WHERE noteId=:noteId',
                 parameters: [
@@ -91,7 +93,7 @@ export default function DialogNewPatientNote(props) {
                   dispatch({
                     type: 'set-patient-notes',
                     value: state.patientNotes.map((e) => {
-                      if (e.noteId !== selectedPatientNote.noteId) {
+                      if (e?.noteId !== selectedPatientNote?.noteId) {
                         return e;
                       }
                     }),

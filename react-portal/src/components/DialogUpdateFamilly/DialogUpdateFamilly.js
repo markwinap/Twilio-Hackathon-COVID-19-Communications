@@ -103,7 +103,7 @@ export default function DialogNewFamilly(props) {
                     type: 'set-family',
                     value: {
                       ...family,
-                      ...{ [e.value]: f.currentTarget.value },
+                      ...{ [e.value]: f.target.value },
                     },
                   });
                 }}
@@ -126,13 +126,18 @@ export default function DialogNewFamilly(props) {
             console.log(family);
             const _missing = checkMissing(state.family);
             setErrors(_missing);
+            console.log(_missing);
             if (_missing.length > 0) {
             } else {
               console.log('Not missing');
               const params = {
                 sql:
-                  'UPDATE familly SET firstName=:firstName,lastName=:lastName,relationship=:relationship,email=:email,updatedDate=:updatedDate WHERE famillyId = :famillyId',
+                  'UPDATE familly SET firstName=:firstName,lastName=:lastName,relationship=:relationship,email=:email,mobile=:mobile,updatedDate=:updatedDate WHERE famillyId = :famillyId',
                 parameters: [
+                  {
+                    name: 'famillyId',
+                    value: { longValue: family?.famillyId },
+                  },
                   {
                     name: 'firstName',
                     value: { stringValue: family?.firstName },
@@ -161,6 +166,7 @@ export default function DialogNewFamilly(props) {
                   },
                 ],
               };
+              console.log(params);
               await axios({
                 method: 'post',
                 headers: {

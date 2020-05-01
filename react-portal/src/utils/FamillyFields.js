@@ -48,7 +48,7 @@ const fields = [
   {
     label: 'Mobile',
     //required: true,
-    type: 'phone',
+    type: 'text',
     xs: 6,
     sm: 6,
     md: 3,
