@@ -333,8 +333,8 @@ export default function DialogPatient(props) {
                   </Typography>
                   {state.familyMembers.map((e, i) => (
                     <Chip
-                      key={`${e.firstName}${e.lastName}`}
-                      label={`${e.firstName} ${e.lastName}`}
+                      key={`${e?.firstName}${e?.lastName}`}
+                      label={`${e?.firstName} ${e?.lastName}`}
                       variant="outlined"
                       className={classes.chip}
                       size="small"
@@ -367,11 +367,9 @@ export default function DialogPatient(props) {
                             console.log(res.data);
                             dispatch({
                               type: 'set-family-members',
-                              value: state.familyMembers.map((f) => {
-                                if (f?.famillyId !== e?.famillyId) {
-                                  return f;
-                                }
-                              }),
+                              value: state.familyMembers.filter(
+                                (f) => f?.famillyId !== e?.famillyId
+                              ),
                             });
                           })
                           .catch((err) => {

@@ -92,11 +92,9 @@ export default function DialogNewPatientNote(props) {
 
                   dispatch({
                     type: 'set-patient-notes',
-                    value: state.patientNotes.map((e) => {
-                      if (e?.noteId !== selectedPatientNote?.noteId) {
-                        return e;
-                      }
-                    }),
+                    value: state.patientNotes.filter(
+                      (e) => e?.noteId !== selectedPatientNote?.noteId
+                    ),
                   });
                 })
                 .catch((err) => {
